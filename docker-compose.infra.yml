@@ -18,6 +18,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - copy-city-network
 
   postgres-init:
     image: postgres:16-alpine
@@ -36,6 +38,8 @@ services:
         psql -h postgres -U ${POSTGRES_USER} -d ${POSTGRES_DB}
         -c "CREATE SCHEMA IF NOT EXISTS auth; CREATE SCHEMA IF NOT EXISTS backend;"
     restart: "no"
+    networks:
+      - copy-city-network
 
   redis:
     image: redis:7-alpine
@@ -53,7 +57,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - copy-city-network
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  copy-city-network:
+    name: copy-city-network
