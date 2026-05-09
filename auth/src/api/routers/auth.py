@@ -100,7 +100,6 @@ async def me(
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
     request: Request,
-    response: Response,
     payload: dict = Depends(get_token_payload),
 ):
     async with unit_of_work() as uow:
@@ -110,4 +109,6 @@ async def logout(
             refresh_token_value=request.cookies.get(REFRESH_TOKEN_COOKIE_KEY),
             access_token_jti=payload.get("jti"),
         )
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.delete_cookie(key=REFRESH_TOKEN_COOKIE_KEY)
+    return response
