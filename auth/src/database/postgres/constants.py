@@ -1,0 +1,9 @@
+from datetime import timezone, timedelta
+
+EMAIL_LENGTH_MAX_LENGTH = 320
+NAME_STR_LEN = 128
+REFRESH_TOKEN_MAX_LENGTH = 512
+USER_AGENT_MAX_LENGTH = 256
+HASHED_PASSWORD_MAX_LENGTH = 255
+
+MOSCOW_TZ = timezone(timedelta(hours=3))
