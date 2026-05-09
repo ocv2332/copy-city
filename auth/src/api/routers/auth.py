@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from api.schemas import LoginRequest, RequestUsers, ResponseUsers, TokenResponse
+from api.schemas import RequestUsers, ResponseUsers, TokenResponse
 from api.deps.auth import get_current_user_id, get_token_payload
 from core.services.users import UserService
 from database.postgres.sessions.uow import unit_of_work
@@ -37,15 +37,12 @@ async def login(
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
-    body = LoginRequest(
-        email=form_data.username,
-        password=form_data.password,
-    )
     async with unit_of_work() as uow:
         result = await user_service.login(
             session=uow.session,
             redis=uow.redis,
-            body=body,
+            email=form_data.username,
+            password=form_data.password,
             user_agent=request.headers.get("user-agent", "unknown"),
         )
         if result is None:
@@ -54,7 +51,7 @@ async def login(
                 detail="Invalid email or password",
             )
         token_response, refresh_token = result
-        _set_refresh_cookie(response, refresh_token)
+        _set_refresh_cookie(response, str(refresh_token))
         return token_response
 
 
@@ -83,8 +80,8 @@ async def refresh(request: Request, response: Response):
         return token_response
 
 
-@router.get("/me", response_model=ResponseUsers)
-async def me(
+@router.get("/check", response_model=ResponseUsers)
+async def check(
     current_user_id: UUID = Depends(get_current_user_id),
 ):
     async with unit_of_work() as uow:

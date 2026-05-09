@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
+from uuid import UUID
 
-from pydantic import EmailStr
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 
 from api.schemas import (
-    LoginRequest,
     RequestUsers,
     ResponseUsers,
     TokenResponse,
@@ -39,14 +39,14 @@ class UserService:
         return await user_repository.get_user(session=session, user_id=user_id)
 
     @classmethod
-    async def get_user_by_email(cls, session: AsyncSession, email: EmailStr) -> Users | None:
+    async def get_user_by_email(cls, session: AsyncSession, email: str) -> Users | None:
         return await user_repository.get_user_by_email(session=session, email=email)
 
     @classmethod
     async def authenticate_user(
             cls,
             session: AsyncSession,
-            email: EmailStr,
+            email: str,
             password: str,
     ) -> Users | None:
         user: Users = await cls.get_user_by_email(session=session, email=email)
@@ -79,13 +79,14 @@ class UserService:
         cls,
         session: AsyncSession,
         redis: Redis | None,
-        body: LoginRequest,
+        email: str,
+        password: str,
         user_agent: str,
-    ) -> tuple[TokenResponse, str] | None:
-        user = await cls.authenticate_user(
+    ) -> tuple[TokenResponse, InstrumentedAttribute[str]] | None:
+        user: Users = await cls.authenticate_user(
             session=session,
-            email=body.email,
-            password=body.password.get_secret_value(),
+            email=email,
+            password=password,
         )
         if user is None:
             return None
@@ -99,13 +100,14 @@ class UserService:
             token=refresh_token_value,
             expiration_date=expiration_date,
         )
+        user_id: UUID = user.id  # type: ignore[arg-type]
         await session_repository.create(
             session=session,
-            user_id=user.id,
-            refresh_token_id=refresh_token.id,
+            user_id=user_id,
+            refresh_token_id=refresh_token.id,  # type: ignore[arg-type]
             user_agent=user_agent,
         )
-        access_token, jti, ttl = create_access_token(user.id, user.role.value)
+        access_token, jti, ttl = create_access_token(user_id, user.role.value)
         if redis is not None:
             await redis.set(build_access_token_redis_key(jti), str(user.id), ex=ttl)
         return TokenResponse(
@@ -127,10 +129,10 @@ class UserService:
             return None
         if refresh_token.expiration_date < datetime.now(tz=MOSCOW_TZ):
             return None
-
+        refresh_token_id: UUID = refresh_token.id  # type: ignore[arg-type]
         user_session = await session_repository.get_by_refresh_token_id(
             session=session,
-            refresh_token_id=refresh_token.id,
+            refresh_token_id=refresh_token_id,
         )
         if user_session is None:
             return None
@@ -143,9 +145,12 @@ class UserService:
         access_token, jti, ttl = create_access_token(user_session.user.id, user_session.user.role.value)
         if redis is not None:
             await redis.set(build_access_token_redis_key(jti), str(user_session.user.id), ex=ttl)
+
+        refresh_token_value: str = str(refresh_token.token)
+
         return TokenResponse(
             access_token=access_token,
-        ), refresh_token.token
+        ), refresh_token_value
 
     @classmethod
     async def logout(

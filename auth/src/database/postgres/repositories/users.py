@@ -16,7 +16,7 @@ class UsersRepository:
         return await session.get(Users, user_id)
 
     @classmethod
-    async def get_user_by_email(cls, session: AsyncSession, email: EmailStr) -> Users | None:
+    async def get_user_by_email(cls, session: AsyncSession, email: str) -> Users | None:
         query = select(Users).where(Users.email == email)
         return (await session.execute(query)).scalar_one_or_none()
 
