@@ -12,7 +12,7 @@ from database.postgres.models.user_roles import UserRoles
 
 class UsersRepository:
     @classmethod
-    async def get_user(cls, session: AsyncSession, user_id: UUID) -> Users | None:
+    async def get(cls, session: AsyncSession, user_id: UUID) -> Users | None:
         return await session.get(Users, user_id)
 
     @classmethod
@@ -21,7 +21,7 @@ class UsersRepository:
         return (await session.execute(query)).scalar_one_or_none()
 
     @classmethod
-    async def create_user(
+    async def create(
             cls,
             session: AsyncSession,
             email: EmailStr,
@@ -47,3 +47,13 @@ class UsersRepository:
 
         return user
 
+    @classmethod
+    async def update_user_roles(cls, session: AsyncSession, user_id: UUID, role: UserRoles) -> Users | None:
+        user = await session.get(Users, user_id)
+
+        if user is None:
+            return None
+
+        user.roles = role
+        await session.flush()
+        return user

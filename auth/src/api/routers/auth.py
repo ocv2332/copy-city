@@ -3,9 +3,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from api.schemas import RequestUsers, ResponseUsers, TokenResponse
+from api.deps.required_admin import require_admin
+from api.schemas import RequestUsers, ResponseUsers, TokenResponse, UpdateUserRoleRequest
 from api.deps.auth import get_current_user_id, get_token_payload
 from core.services.users import UserService
+from database.postgres.models import Users
 from database.postgres.sessions.uow import unit_of_work
 from settings.jwt import settings as jwt_settings
 
@@ -109,3 +111,17 @@ async def logout(
     response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.delete_cookie(key=REFRESH_TOKEN_COOKIE_KEY)
     return response
+
+@router.patch("/users/{user_id}/role", response_model=ResponseUsers, dependencies=[Depends(require_admin)])
+async def update_user_roles(user_id: UUID, body: UpdateUserRoleRequest):
+    async with unit_of_work() as uow:
+        user = await user_service.update_user_roles(
+            session=uow.session,
+            user_id=user_id,
+            role=body.role,
+        )
+        if user is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        return ResponseUsers.model_validate(user)
+

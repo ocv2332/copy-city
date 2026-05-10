@@ -19,6 +19,7 @@ from core.services.security import (
 )
 from database.postgres.constants import MOSCOW_TZ
 from database.postgres.models import Users
+from database.postgres.models.user_roles import UserRoles
 from database.postgres.repositories import (
     AuthSessionRepository,
     RefreshTokenRepository,
@@ -36,7 +37,7 @@ auth_session_repository = AuthSessionRepository()
 class UserService:
     @classmethod
     async def get_user_by_id(cls, session: AsyncSession, user_id) -> Users | None:
-        return await user_repository.get_user(session=session, user_id=user_id)
+        return await user_repository.get(session=session, user_id=user_id)
 
     @classmethod
     async def get_user_by_email(cls, session: AsyncSession, email: str) -> Users | None:
@@ -63,7 +64,7 @@ class UserService:
     async def create_user(cls, session: AsyncSession, body: RequestUsers) -> ResponseUsers | None:
         hashed_password = hash_password(body.password.get_secret_value())
 
-        user = await user_repository.create_user(
+        user = await user_repository.create(
             session=session,
             email=body.email,
             lastname=body.lastname,
@@ -178,3 +179,7 @@ class UserService:
             refresh_token_id=refresh_token.id,
         )
         await refresh_token_repository.delete(session=session, refresh_token=refresh_token)
+
+    @classmethod
+    async def update_user_roles(cls, session: AsyncSession, user_id: UUID, role: UserRoles) -> ResponseUsers | None:
+        return await user_repository.update_user_roles(session=session, user_id=user_id, role=role)
