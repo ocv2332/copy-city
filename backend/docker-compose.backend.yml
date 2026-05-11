@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    container_name: copy-city-backend
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    ports:
+      - "8001:8001"
+    command: [
+      "sh",
+      "-c",
+      "alembic upgrade head && python -m uvicorn main:app --host 0.0.0.0 --port 8001 --reload"
+    ]
+    volumes:
+      - ./src:/app/backend/src
+    networks:
+      - copy-city-network
+
+networks:
+  copy-city-network:
+    external: true
+    name: copy-city-network
