@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
-from api.deps import UserData
+from api.deps import UserData, require_admin
 from api.schemas.orders import CreateOrderItemRequest, CreateOrderRequest, OrderItemResponse, OrderResponse
 from core.services.order_items import OrderItemService
 from core.services.orders import OrderService
@@ -61,13 +61,13 @@ async def create_order(body: CreateOrderRequest, userData: UserData):
     response_model=OrderResponse,
     summary="Изменить статус заказа",
     description="Изменяет статус существующего заказа текущего пользователя.",
+    dependencies=[Depends(require_admin)],
 )
-async def update_order_status(order_id: UUID, status_value: OrderStatus, userData: UserData):
+async def update_order_status(order_id: UUID, status_value: OrderStatus):
     async with unit_of_work() as uow:
         order = await order_service.update_status(
             session=uow.session,
             order_id=order_id,
-            user_id=userData.id,
             status=status_value,
         )
         if order is None:

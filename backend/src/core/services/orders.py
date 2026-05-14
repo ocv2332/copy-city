@@ -34,11 +34,10 @@ class OrderService:
         cls,
         session: AsyncSession,
         order_id: UUID,
-        user_id: UUID,
         status: OrderStatus,
     ) -> OrderResponse | None:
         order = await OrderRepository.get_by_id(session=session, order_id=order_id)
-        if order is None or order.user_id != user_id:
+        if order is None:
             return None
 
         updated_order = await OrderRepository.update(

@@ -17,7 +17,7 @@ async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
 ) -> AuthorizedUser:
     auth_request = request.Request(
-        url=f"{auth_settings.AUTH_SERVICE_URL.rstrip('/')}{auth_settings.AUTH_CHECK_PATH}",
+        url=f"{auth_settings.AUTH_SERVICE_URL_DOCKER.rstrip('/')}{auth_settings.AUTH_CHECK_PATH}",
         headers={
             "Authorization": f"Bearer {token}",
         },
