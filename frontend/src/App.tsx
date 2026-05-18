@@ -1,107 +1,107 @@
-import { useeffect, usestate } from 'react';
-import { refreshcw } from 'lucide-react';
-import { authapi, authstore, backendapi } from './api';
-import { adminpanel } from './admin/adminpanel';
-import { menubar } from './menubar';
-import { aboutsection } from './components/aboutsection';
-import { authpanel } from './components/authpanel';
-import { cart } from './components/cart';
-import { catalog } from './components/catalog';
-import { mapsection } from './components/mapsection';
-import { orders } from './components/orders';
-import { photoprintingsection } from './components/photoprintingsection';
-import { reviewssection } from './components/reviewssection';
-import { servicesmenu } from './components/servicesmenu';
-import type { cartitem, order, product, user } from './types';
+import { useEffect, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
+import { authApi, authStore, backendApi } from './api';
+import { AdminPanel } from './admin/adminPanel';
+import { MenuBar } from './MenuBar';
+import { AboutSection } from './components/AboutSection';
+import { AuthPanel } from './components/AuthPanel';
+import { Cart } from './components/Cart';
+import { Catalog } from './components/Catalog';
+import { MapSection } from './components/MapSection';
+import { Orders } from './components/Orders';
+import { PhotoPrintingSection } from './components/PhotoPrintingSection';
+import { ReviewsSection } from './components/ReviewsSection';
+import { ServicesMenu } from './components/ServicesMenu';
+import type { CartItem, Order, Product, User } from './types';
 
-export function app() {
-  const [user, setuser] = usestate<user | null>(null);
-  const [products, setproducts] = usestate<product[]>([]);
-  const [orders, setorders] = usestate<order[]>([]);
-  const [cart, setcart] = usestate<cartitem[]>([]);
-  const [loading, setloading] = usestate(true);
-  const [error, seterror] = usestate('');
+export function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const isadmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
 
-  async function loadproducts() {
-    setproducts(await backendapi.getproducts());
+  async function loadProducts() {
+    setProducts(await backendApi.getProducts());
   }
 
-  async function loadorders() {
-    if (!authstore.gettoken()) return;
-    setorders(await backendapi.getorders());
+  async function loadOrders() {
+    if (!authStore.getToken()) return;
+    setOrders(await backendApi.getOrders());
   }
 
   async function bootstrap() {
-    setloading(true);
-    seterror('');
+    setLoading(true);
+    setError('');
     try {
-      await loadproducts();
-      if (authstore.gettoken()) {
-        setuser(await authapi.check());
-        await loadorders();
+      await loadProducts();
+      if (authStore.getToken()) {
+        setUser(await authApi.check());
+        await loadOrders();
       }
     } catch (err) {
-      seterror(err instanceof error ? err.message : 'ошибка загрузки приложения');
-      authstore.clear();
-      setuser(null);
+      setError(err instanceof Error ? err.message : 'Ошибка загрузки приложения');
+      authStore.clear();
+      setUser(null);
     } finally {
-      setloading(false);
+      setLoading(false);
     }
   }
 
   async function logout() {
-    await authapi.logout();
-    setuser(null);
-    setorders([]);
-    setcart([]);
+    await authApi.logout();
+    setUser(null);
+    setOrders([]);
+    setCart([]);
   }
 
-  useeffect(() => {
+  useEffect(() => {
     void bootstrap();
   }, []);
 
   if (loading) {
-    return <div classname="screen-state"><refreshcw classname="spin" /> загружаем кабинет...</div>;
+    return <div className="screen-state"><RefreshCw className="spin" /> Загружаем кабинет...</div>;
   }
 
   return (
-    <main classname="app-shell">
-      <menubar user={user} onlogout={logout} />
+    <main className="app-shell">
+      <MenuBar user={user} onLogout={logout} />
 
-      {error && <p classname="error banner">{error}</p>}
+      {error && <p className="error banner">{error}</p>}
 
       {!user ? (
         <>
-          <authpanel onauthorized={(authorizeduser) => {
-            setuser(authorizeduser);
-            void loadorders();
+          <AuthPanel onAuthorized={(authorizedUser) => {
+            setUser(authorizedUser);
+            void loadOrders();
           }} />
-           <catalog products={products} cart={cart} setcart={setcart} isadmin={false} reloadproducts={() => void loadproducts()} />
-          <servicesmenu />
-          <photoprintingsection />
-          <aboutsection />
-          <mapsection />
-          <reviewssection />
+           <Catalog products={products} cart={cart} setCart={setCart} isAdmin={false} reloadProducts={() => void loadProducts()} />
+          <ServicesMenu />
+          <PhotoPrintingSection />
+          <AboutSection />
+          <MapSection />
+          <ReviewsSection />
         </>
       ) : (
         <>
-
-
-          {isadmin && <adminpanel onproductcreated={() => void loadproducts()} />}
-          <div classname="workspace">
-            <div classname="main-column">
-              <catalog products={products} cart={cart} setcart={setcart} isadmin={isadmin} reloadproducts={() => void loadproducts()} />
-              <orders orders={orders} isadmin={isadmin} reloadorders={() => void loadorders()} />
+  
+    
+          {isAdmin && <AdminPanel onProductCreated={() => void loadProducts()} />}
+          <div className="workspace">
+            <div className="main-column">
+              <Catalog products={products} cart={cart} setCart={setCart} isAdmin={isAdmin} reloadProducts={() => void loadProducts()} />
+              <Orders orders={orders} isAdmin={isAdmin} reloadOrders={() => void loadOrders()} />
             </div>
-            <cart cart={cart} setcart={setcart} onordercreated={() => void loadorders()} />
+            <Cart cart={cart} setCart={setCart} onOrderCreated={() => void loadOrders()} />
           </div>
-          <servicesmenu />
-          <photoprintingsection />
-          <aboutsection />
-          <mapsection />
-          <reviewssection />
+          <ServicesMenu />
+          <PhotoPrintingSection />
+          <AboutSection />
+          <MapSection />
+          <ReviewsSection />
         </>
       )}
     </main>

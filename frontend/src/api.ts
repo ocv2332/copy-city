@@ -11,8 +11,8 @@ import type {
   UserRole,
 } from './types';
 
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:8000/api/v1';
-const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8001/api/v1';
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:8054/api/v1';
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8055/api/v1';
 
 const TOKEN_KEY = 'copy_city_access_token';
 
